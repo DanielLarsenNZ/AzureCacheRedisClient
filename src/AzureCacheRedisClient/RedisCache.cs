@@ -65,11 +65,12 @@ namespace AzureCacheRedisClient
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
-        /// <returns>The value or null if no key exists</returns>
+        /// <returns>The value or default if no key exists</returns>
         public async Task<T?> Get<T>(string key)
         {
             if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
             var value = await HandleRedisExceptions(() => _db.StringGetAsync(key));
+            if (value.IsNull) return default;
             return JsonSerializer.Deserialize<T>(value);
         }
 

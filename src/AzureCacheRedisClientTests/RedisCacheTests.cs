@@ -32,6 +32,17 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        public async Task Get_NoSet_ReturnsDefaultValue()
+        {
+            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"]);
+
+            int cachedItem = await cache.Get<int>("Get_NoSet_ReturnsDefaultValue");
+
+            Assert.AreEqual(cachedItem, default);
+        }
+
+
+        [TestMethod]
         public void NewRedisCache_NoConnectionString_IsConnectedFalse()
         {
             var cache = new RedisCache();
