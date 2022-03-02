@@ -8,7 +8,7 @@
 	<Version>1.0.0-preview</Version>
 	<Authors>Daniel Larsen</Authors>
 	<PackageTags>Microsoft;Azure;Azure Cache for Redis; Redis</PackageTags>
-	<Description>This is a Redis client library that incorporates best practices for Azure Cache for Redis</Description>
+	<Description>A Redis client library that incorporates best practices for Azure Cache for Redis.</Description>
 	<RepositoryUrl>https://github.com/DanielLarsenNZ/AzureCacheRedisClient</RepositoryUrl>
   </PropertyGroup>
 
