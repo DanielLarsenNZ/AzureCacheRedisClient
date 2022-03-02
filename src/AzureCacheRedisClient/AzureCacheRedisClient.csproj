@@ -4,6 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<PackageId>DanielLarsenNZ.AzureCacheRedisClient</PackageId>
+	<Version>1.0.0-preview</Version>
+	<Authors>Daniel Larsen</Authors>
+	<PackageTags>Microsoft;Azure;Azure Cache for Redis; Redis</PackageTags>
+	<Description>This is a Redis client library that incorporates best practices for Azure Cache for Redis</Description>
+	<RepositoryUrl>https://github.com/DanielLarsenNZ/AzureCacheRedisClient</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
