@@ -4,6 +4,18 @@ namespace AzureCacheRedisClient
     public interface IRedisCache
     {
         /// <summary>
+        /// Initialize an active connection to Redis.
+        /// </summary>
+        /// <param name="connectionString"></param>
+        public void Connect(string connectionString);
+
+        /// <summary>
+        /// Indicates if a connection has been initialized and an active connection has been made to a Redis database. 
+        /// Once true, always true, i.e. connection failures will not reset this property to false.
+        /// </summary>
+        public bool IsConnected { get; }
+
+        /// <summary>
         /// Adds a value to Cache, only if no key with the same name exists.
         /// </summary>
         /// <param name="key"></param>

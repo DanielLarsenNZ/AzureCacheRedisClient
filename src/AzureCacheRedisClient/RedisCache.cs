@@ -6,16 +6,34 @@ namespace AzureCacheRedisClient
 {
     public class RedisCache : IRedisCache
     {
-        private readonly IDatabase _db;
+        private IDatabase? _db;
 
-        private int _retryMaxAttempts;
+        private const int _retryMaxAttempts = 5;
+
+        public RedisCache()
+        {            
+        }
 
         public RedisCache(string connectionString)
         {
-            _retryMaxAttempts = 5;
+            Connect(connectionString);
+        }
+
+        /// <summary>
+        /// Initialize an active connection to Redis.
+        /// </summary>
+        /// <param name="connectionString"></param>
+        public void Connect(string connectionString)
+        {
             Redis.InitializeConnectionString(connectionString);
             _db = HandleRedisExceptions(() => Redis.Connection.GetDatabase());
         }
+
+        /// <summary>
+        /// Indicates if a connection has been initialized and an active connection has been made to a Redis database. 
+        /// Once true, always true, i.e. connection failures will not reset this property to false.
+        /// </summary>
+        public bool IsConnected { get { return _db != null; } }
 
         /// <summary>
         /// Adds a value to Cache, only if no key with the same name exists.
@@ -25,7 +43,10 @@ namespace AzureCacheRedisClient
         /// <param name="expiry"></param>
         /// <returns>`true` if the value was set. `false` if the key already exists.</returns>
         public async Task<bool> Add(string key, object value, TimeSpan expiry)
-            => await HandleRedisExceptions(() => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.NotExists));
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+            return await HandleRedisExceptions(() => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.NotExists));
+        }
 
         /// <summary>
         /// Sets a value in Cache, overwriting any existing value if same key exists.
@@ -34,7 +55,10 @@ namespace AzureCacheRedisClient
         /// <param name="value"></param>
         /// <param name="expiry"></param>
         public async Task Set(string key, object value, TimeSpan expiry)
-            => await HandleRedisExceptions(() => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.Always));
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+            await HandleRedisExceptions(() => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.Always));
+        }
 
         /// <summary>
         /// Returns a cache item by key.
@@ -44,6 +68,7 @@ namespace AzureCacheRedisClient
         /// <returns>The value or null if no key exists</returns>
         public async Task<T?> Get<T>(string key)
         {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
             var value = await HandleRedisExceptions(() => _db.StringGetAsync(key));
             return JsonSerializer.Deserialize<T>(value);
         }
@@ -74,31 +99,5 @@ namespace AzureCacheRedisClient
                 }
             }
         }
-
-        //private async Task<T> HandleRedisExceptionsAsync<T>(Func<Task<T>> func)
-        //{
-        //    int reconnectRetry = 0;
-        //    int disposedRetry = 0;
-        //    while (true)
-        //    {
-        //        try
-        //        {
-        //            return await func();
-        //        }
-        //        catch (Exception ex) when (ex is RedisConnectionException || ex is SocketException)
-        //        {
-        //            reconnectRetry++;
-        //            if (reconnectRetry > _retryMaxAttempts)
-        //                throw;
-        //            Redis.ForceReconnect();
-        //        }
-        //        catch (ObjectDisposedException)
-        //        {
-        //            disposedRetry++;
-        //            if (disposedRetry > _retryMaxAttempts)
-        //                throw;
-        //        }
-        //    }
-        //}
     }
 }

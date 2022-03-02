@@ -30,6 +30,28 @@ namespace AzureCacheRedisClientTests
 
             Assert.AreEqual(item, cachedItem);
         }
+
+        [TestMethod]
+        public void NewRedisCache_NoConnectionString_IsConnectedFalse()
+        {
+            var cache = new RedisCache();
+            Assert.IsFalse(cache.IsConnected);
+        }
+
+        [TestMethod]
+        public void NewRedisCacheNoConnectionString_Connect_IsConnectedTrue()
+        {
+            var cache = new RedisCache();
+            cache.Connect(_configuration["AzureCacheRedisConnectionString"]);
+            Assert.IsTrue(cache.IsConnected);
+        }
+
+        [TestMethod]
+        public void NewRedisCache_ConnectionString_IsConnectedTrue()
+        {
+            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"]);
+            Assert.IsTrue(cache.IsConnected);
+        }
     }
 
     public class TestItem
