@@ -17,10 +17,8 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
       - name: pack and push
         run: |
           cd src/AzureCacheRedisClient
           dotnet pack -c Release
-          dotnet nuget push bin/Release/**.nupkg -k ${NUGET_AUTH_TOKEN} -s https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push bin/Release/**.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s https://api.nuget.org/v3/index.json --skip-duplicate
