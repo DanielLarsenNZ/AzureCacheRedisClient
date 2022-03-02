@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace AzureCacheRedisClient
 {
-    public class RedisCache
+    public class RedisCache : IRedisCache
     {
         private readonly IDatabase _db;
 
