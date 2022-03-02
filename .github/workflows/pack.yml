@@ -23,4 +23,4 @@ jobs:
         run: |
           cd src/AzureCacheRedisClient
           dotnet pack -c Release
-          dotnet nuget push bin/Release/**.nupkg -k '${NUGET_AUTH_TOKEN}' -s https://api.nuget.org/v3/index.json
+          dotnet nuget push bin/Release/**.nupkg -k '${NUGET_AUTH_TOKEN}' -s https://api.nuget.org/v3/index.json --skip-duplicate

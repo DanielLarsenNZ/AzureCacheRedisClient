@@ -10,6 +10,8 @@
 	<PackageTags>Microsoft;Azure;Azure Cache for Redis; Redis</PackageTags>
 	<Description>A Redis client library that incorporates best practices for Azure Cache for Redis.</Description>
 	<RepositoryUrl>https://github.com/DanielLarsenNZ/AzureCacheRedisClient</RepositoryUrl>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Copyright>2022 Daniel Larsen</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
