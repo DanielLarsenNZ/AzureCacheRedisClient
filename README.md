@@ -4,7 +4,7 @@ Azure Cache for Redis client for .NET 6.0.
 
 ## Getting started
 
-> For a detailed example see [RedisCacheTests.cs](src\AzureCacheRedisClientTests\RedisCacheTests.cs).
+> For a more detailed example see [RedisCacheTests.cs](src\AzureCacheRedisClientTests\RedisCacheTests.cs).
 
 ```csharp
 var cache = new RedisCache(connectionString);
