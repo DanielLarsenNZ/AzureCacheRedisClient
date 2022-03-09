@@ -3,11 +3,16 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("AzureCacheRedisClientTests")]
 
 namespace AzureCacheRedisClient
 {
     public class RedisCache : IRedisCache
     {
+        
+
         private IDatabase? _db;
         private TelemetryClient? _telemetryClient;
 
@@ -35,6 +40,8 @@ namespace AzureCacheRedisClient
         public bool IsConnected { get { return _db != null; } }
 
         public TelemetryClient? TelemetryClient { get => _telemetryClient; set => _telemetryClient = value; }
+
+        internal static int RetryMaxAttempts => _retryMaxAttempts;
 
         /// <summary>
         /// Initialize an active connection to Redis.
@@ -94,14 +101,14 @@ namespace AzureCacheRedisClient
         /// Handles Redis exceptions and Tracks dependency calls via Application Insights
         /// </summary>
         /// <remarks>https://docs.microsoft.com/en-us/azure/azure-cache-for-redis/cache-dotnet-how-to-use-azure-redis-cache</remarks>
-        private T HandleRedis<T>(string operation, string? data, Func<T> func)
+        internal T HandleRedis<T>(string operation, string? data, Func<T> func)
         {
             int reconnectRetry = 0;
             int disposedRetry = 0;
             while (true)
             {
                 var telemetry = NewDependencyTelemetry(operation, data);
-                
+
                 try
                 {
                     var result = func();
@@ -111,25 +118,48 @@ namespace AzureCacheRedisClient
                 catch (Exception ex) when (ex is RedisConnectionException || ex is SocketException)
                 {
                     TrackDependency(telemetry, ex);
+                    TrackException(ex);
 
                     reconnectRetry++;
                     if (reconnectRetry > _retryMaxAttempts)
+                    {
+                        TrackTrace($"RedisCache: Throwing after {reconnectRetry} connection errors.", SeverityLevel.Error);
                         throw;
+                    }
+
+                    TrackTrace($"RedisCache: Force reconnect after {reconnectRetry} connection errors.", SeverityLevel.Warning);
                     Redis.ForceReconnect();
                 }
                 catch (ObjectDisposedException ex)
                 {
                     TrackDependency(telemetry, ex);
+                    TrackException(ex);
 
                     disposedRetry++;
                     if (disposedRetry > _retryMaxAttempts)
+                    {
+                        TrackTrace($"RedisCache: Throwing after {disposedRetry} Object Disposed Exceptions.", SeverityLevel.Error);
                         throw;
+                    }
+
+                    TrackTrace($"RedisCache: Retrying after {disposedRetry} Object Disposed Exceptions.", SeverityLevel.Warning);
                 }
                 catch (Exception ex)
                 {
                     TrackDependency(telemetry, ex);
+                    TrackException(ex);
                 }
             }
+        }
+
+        private void TrackTrace(string message, SeverityLevel severity)
+        {
+            if (_telemetryClient != null) _telemetryClient.TrackTrace(message, severity);
+        }
+
+        private void TrackException(Exception ex)
+        {
+            if (_telemetryClient != null) _telemetryClient.TrackException(ex);
         }
 
         private void TrackDependency(DependencyTelemetry telemetry, Exception? ex = null)
