@@ -9,10 +9,11 @@ using System.Runtime.CompilerServices;
 
 namespace AzureCacheRedisClient
 {
-    public class RedisCache : IRedisCache
+    /// <summary>
+    /// Provides a set of operations on a Redis Db that are commonly used for Caching.
+    /// </summary>
+    public class RedisDb : IRedisCache, IRedisDb
     {
-        
-
         private IDatabase? _db;
         private TelemetryClient? _telemetryClient;
 
@@ -20,18 +21,18 @@ namespace AzureCacheRedisClient
 
         private string? _serverHostname;
 
-        public RedisCache()
+        public RedisDb()
         {            
         }
 
-        public RedisCache(string connectionString)
+        public RedisDb(string connectionString)
         {
             Connect(connectionString);
         }
 
-        public RedisCache(TelemetryClient telemetryClient) => _telemetryClient = telemetryClient;
+        public RedisDb(TelemetryClient telemetryClient) => _telemetryClient = telemetryClient;
 
-        public RedisCache(string connectionString, TelemetryClient telemetryClient) : this(connectionString) => _telemetryClient = telemetryClient;
+        public RedisDb(string connectionString, TelemetryClient telemetryClient) : this(connectionString) => _telemetryClient = telemetryClient;
 
         /// <summary>
         /// Indicates if a connection has been initialized and an active connection has been made to a Redis database. 
@@ -49,8 +50,8 @@ namespace AzureCacheRedisClient
         /// <param name="connectionString"></param>
         public void Connect(string connectionString)
         {
-            Redis.InitializeConnectionString(connectionString);
-            _db = HandleRedis("Connection Get Db", null, () => Redis.Connection.GetDatabase());
+            RedisConnection.InitializeConnectionString(connectionString);
+            _db = HandleRedis("Connection Get Db", null, () => RedisConnection.Connection.GetDatabase());
             _serverHostname = ServerHostName(connectionString);
         }
 
@@ -69,6 +70,36 @@ namespace AzureCacheRedisClient
         }
 
         /// <summary>
+        /// Returns a cache item by key.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <returns>The value or default if no key exists</returns>
+        public async Task<T?> Get<T>(string key)
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+
+            var value = await HandleRedis("Db Get", key, () => _db.StringGetAsync(key));
+
+            if (value.IsNull) return default;
+            return JsonSerializer.Deserialize<T>(value);
+        }
+
+        /// <summary>
+        /// Increments the <see cref="long"/> number stored at <paramref name="key"/> by <paramref name="increment"/> . 
+        /// If the key does not exist, it is set to 0 before performing the operation.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="increment">The amount to increment by (defaults to 1).</param>
+        /// <param name="fireAndForget">When true, the caller will immediately receive a default-value. This value is not indicative of anything at the server.</param>
+        public async Task<long> Increment(string key, long increment = 1, bool fireAndForget = false)
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+
+            return await HandleRedis("Db Set", key, () => _db.StringIncrementAsync(key, increment, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
+        }
+
+        /// <summary>
         /// Sets a value in Cache, overwriting any existing value if same key exists.
         /// </summary>
         /// <param name="key"></param>
@@ -81,21 +112,6 @@ namespace AzureCacheRedisClient
             await HandleRedis("Db Set", key, () => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.Always));
         }
 
-        /// <summary>
-        /// Returns a cache item by key.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <returns>The value or default if no key exists</returns>
-        public async Task<T?> Get<T>(string key)
-        {
-            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
-
-            var value = await HandleRedis("Db Get", key, () => _db.StringGetAsync(key));
-            
-            if (value.IsNull) return default;
-            return JsonSerializer.Deserialize<T>(value);
-        }
 
         /// <summary>
         /// Handles Redis exceptions and Tracks dependency calls via Application Insights
@@ -128,7 +144,7 @@ namespace AzureCacheRedisClient
                     }
 
                     TrackTrace($"RedisCache: Force reconnect after {reconnectRetry} connection errors.", SeverityLevel.Warning);
-                    Redis.ForceReconnect();
+                    RedisConnection.ForceReconnect();
                 }
                 catch (ObjectDisposedException ex)
                 {

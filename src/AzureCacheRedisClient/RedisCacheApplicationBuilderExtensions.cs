@@ -8,11 +8,11 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static IApplicationBuilder UseRedisCache(this IApplicationBuilder app, string? connectionString = null)
         {
-            var redis = app.ApplicationServices.GetService<RedisCache>();
+            var redis = app.ApplicationServices.GetService<RedisDb>();
 
             if (redis is null)
             {
-                throw new NullReferenceException($"A service named \"{typeof(RedisCache).Name}\" cannot be found in the Application Services. Ensure `services.AddSingleton<RedisCache>()` is called in ConfigureServices().");
+                throw new NullReferenceException($"A service named \"{typeof(RedisDb).Name}\" cannot be found in the Application Services. Ensure `services.AddSingleton<RedisCache>()` is called in ConfigureServices().");
             }
 
             var telemetry = app.ApplicationServices.GetService<TelemetryClient>();

@@ -1,6 +1,10 @@
 ﻿
 namespace AzureCacheRedisClient
 {
+    /// <summary>
+    /// Defines a set of operations on a Redis Db that are commonly used for Caching.
+    /// </summary>
+
     public interface IRedisCache
     {
         /// <summary>

@@ -13,13 +13,13 @@ using System.Threading.Tasks;
 namespace AzureCacheRedisClientTests
 {
     [TestClass]
-    public class RedisCacheTests
+    public class RedisDbTests
     {
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
         private readonly IOperationHolder<RequestTelemetry> _operation;
 
-        public RedisCacheTests()
+        public RedisDbTests()
         {
             _configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -30,19 +30,14 @@ namespace AzureCacheRedisClientTests
             _telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
             _telemetry.InstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
 
-            var request = new RequestTelemetry { Name = nameof(RedisCacheTests) };
+            var request = new RequestTelemetry { Name = nameof(RedisDbTests) };
             request.Context.Operation.Id = Guid.NewGuid().ToString("N");
             request.Context.Operation.ParentId = Guid.NewGuid().ToString("N");
 
             _operation = _telemetry.StartOperation(request);
         }
 
-        public void Teardown()
-        {
-
-        }
-
-        ~RedisCacheTests()
+        ~RedisDbTests()
         {
             _telemetry.StopOperation(_operation);
             _telemetry.Flush();
@@ -51,7 +46,7 @@ namespace AzureCacheRedisClientTests
         [TestMethod]
         public async Task UsageTest()
         {
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
 
             var item = new TestItem { Name = "foo", Value = "bar" };
 
@@ -67,7 +62,7 @@ namespace AzureCacheRedisClientTests
         {
             string testName = nameof(HandleRedis_ThrowObjectDisposedException_TriesMoreThanRetryMaxAttempts);
             int tries = 0;
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+            var cache = new RedisDb();
             
             try
             {
@@ -79,7 +74,7 @@ namespace AzureCacheRedisClientTests
             }
             catch (Exception)
             {
-                Assert.IsTrue(tries > RedisCache.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisCache.RetryMaxAttempts}) times before throwing.");
+                Assert.IsTrue(tries > RedisDb.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisDb.RetryMaxAttempts}) times before throwing.");
                 throw;
             }
         }
@@ -90,7 +85,7 @@ namespace AzureCacheRedisClientTests
         {
             string testName = nameof(HandleRedis_ThrowRedisConnectionException_TriesMoreThanRetryMaxAttempts);
             int tries = 0;
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+            var cache = new RedisDb();
 
             try
             {
@@ -102,7 +97,7 @@ namespace AzureCacheRedisClientTests
             }
             catch (Exception)
             {
-                Assert.IsTrue(tries > RedisCache.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisCache.RetryMaxAttempts}) times before throwing.");
+                Assert.IsTrue(tries > RedisDb.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisDb.RetryMaxAttempts}) times before throwing.");
                 throw;
             }
         }
@@ -113,7 +108,7 @@ namespace AzureCacheRedisClientTests
         {
             string testName = nameof(HandleRedis_ThrowSocketException_TriesMoreThanRetryMaxAttempts);
             int tries = 0;
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+            var cache = new RedisDb();
 
             try
             {
@@ -125,7 +120,7 @@ namespace AzureCacheRedisClientTests
             }
             catch (Exception)
             {
-                Assert.IsTrue(tries > RedisCache.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisCache.RetryMaxAttempts}) times before throwing.");
+                Assert.IsTrue(tries > RedisDb.RetryMaxAttempts, $"HandleRedis should retry at least RetryMaxAttempts ({RedisDb.RetryMaxAttempts}) times before throwing.");
                 throw;
             }
         }
@@ -133,33 +128,76 @@ namespace AzureCacheRedisClientTests
         [TestMethod]
         public async Task Get_NoSet_ReturnsDefaultValue()
         {
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"]);
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
 
             int cachedItem = await cache.Get<int>("Get_NoSet_ReturnsDefaultValue");
 
-            Assert.AreEqual(cachedItem, default);
+            Assert.AreEqual(default, cachedItem);
         }
 
+        [TestMethod]
+        public async Task Increment_NoValueSet_Returns1()
+        {
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            Assert.AreEqual(1, await cache.Increment(Guid.NewGuid().ToString("N")));
+
+            //TODO: Cleanup key
+        }
 
         [TestMethod]
-        public void NewRedisCache_NoConnectionString_IsConnectedFalse()
+        public async Task Increment_NoValueSetIncrement5_Returns5()
         {
-            var cache = new RedisCache();
+            const long number = 5;
+
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            Assert.AreEqual(number, await cache.Increment(Guid.NewGuid().ToString("N"), number));
+
+            //TODO: Cleanup key
+        }
+
+        [TestMethod]
+        public async Task Increment_ValueSet_ReturnsPlus1()
+        {
+            const long number = 1;
+            
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            await cache.Set(nameof(Increment_ValueSet_ReturnsPlus1), number, TimeSpan.FromSeconds(1));
+
+            Assert.AreEqual(number + 1, await cache.Increment(nameof(Increment_ValueSet_ReturnsPlus1)));
+
+        }
+
+        [TestMethod]
+        public async Task Increment_Increment5FireAndForget_Returns0()
+        {
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            Assert.AreEqual(default, await cache.Increment(nameof(Increment_ValueSet_ReturnsPlus1), 5, fireAndForget: true));
+
+        }
+
+        [TestMethod]
+        public void NewRedisDb_NoConnectionString_IsConnectedFalse()
+        {
+            var cache = new RedisDb();
             Assert.IsFalse(cache.IsConnected);
         }
 
         [TestMethod]
-        public void NewRedisCacheNoConnectionString_Connect_IsConnectedTrue()
+        public void NewRedisDbNoConnectionString_Connect_IsConnectedTrue()
         {
-            var cache = new RedisCache();
+            var cache = new RedisDb();
             cache.Connect(_configuration["AzureCacheRedisConnectionString"]);
             Assert.IsTrue(cache.IsConnected);
         }
 
         [TestMethod]
-        public void NewRedisCache_ConnectionString_IsConnectedTrue()
+        public void NewRedisDb_ConnectionString_IsConnectedTrue()
         {
-            var cache = new RedisCache(_configuration["AzureCacheRedisConnectionString"]);
+            var cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
             Assert.IsTrue(cache.IsConnected);
         }
     }
