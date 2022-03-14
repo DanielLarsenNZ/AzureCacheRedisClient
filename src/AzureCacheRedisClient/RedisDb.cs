@@ -96,7 +96,7 @@ namespace AzureCacheRedisClient
         {
             if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
 
-            return await HandleRedis("Db Set", key, () => _db.StringIncrementAsync(key, increment, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
+            return await HandleRedis("Db Increment", key, () => _db.StringIncrementAsync(key, increment, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
         }
 
         /// <summary>
