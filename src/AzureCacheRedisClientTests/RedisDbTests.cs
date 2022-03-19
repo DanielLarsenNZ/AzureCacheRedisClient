@@ -24,7 +24,7 @@ namespace AzureCacheRedisClientTests
             _configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile(@"appsettings.json", false, false)
-                .AddJsonFile(@"appsettings.Development.json", true, false)
+                //.AddJsonFile(@"appsettings.Development.json", true, false)
                 .Build();
 
             _telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
@@ -54,6 +54,38 @@ namespace AzureCacheRedisClientTests
             var cachedItem = await cache.Get<TestItem>("foobar1");
 
             Assert.AreEqual(item, cachedItem);
+        }
+
+        [TestMethod]
+        public async Task DeleteKey_SuccessfullyRemovesKey()
+        {
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+
+            var item = new TestItem { Name= "foo", Value = "bar" };
+            await cache.Set("foobar1", item, TimeSpan.FromSeconds(10));
+
+            await cache.Delete("foobar1");
+
+            var cachedItem = await cache.Get<TestItem>("foobar1");
+
+            Assert.IsNull(cachedItem);
+        }
+
+        [TestMethod]
+        public async Task DeleteKey_IgnoresKeyWhenItDoesNotExist()
+        {
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+
+            var item = new TestItem { Name = "foo", Value = "bar" };
+            await cache.Set("foobar1", item, TimeSpan.FromSeconds(10));
+
+            await cache.Delete("foobar2");
+
+            var cachedItem = await cache.Get<TestItem>("foobar1");
+            var nonExistentKey = await cache.Get<TestItem>("foobar2");
+
+            Assert.AreEqual(item, cachedItem);
+            Assert.IsNull(nonExistentKey);
         }
 
         [TestMethod]

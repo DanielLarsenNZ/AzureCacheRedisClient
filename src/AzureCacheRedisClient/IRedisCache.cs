@@ -43,5 +43,13 @@ namespace AzureCacheRedisClient
         /// <param name="value"></param>
         /// <param name="expiry"></param>
         Task Set(string key, object value, TimeSpan expiry);
+
+        /// <summary>
+        /// Deletes the specified key from the cache. A key is ignored if it does not exist. 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="fireAndForget"></param>
+        /// <returns></returns>
+        Task Delete(string key, bool fireAndForget = false);
     }
 }
