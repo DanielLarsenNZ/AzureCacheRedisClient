@@ -24,7 +24,7 @@ namespace AzureCacheRedisClientTests
             _configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile(@"appsettings.json", false, false)
-                //.AddJsonFile(@"appsettings.Development.json", true, false)
+                .AddJsonFile(@"appsettings.Development.json", true, false)
                 .Build();
 
             _telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
