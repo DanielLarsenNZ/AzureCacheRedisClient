@@ -28,7 +28,10 @@ namespace AzureCacheRedisClientTests
                 .Build();
 
             _telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-            _telemetry.InstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            if (!string.IsNullOrWhiteSpace(_configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]))
+            {
+                _telemetry.InstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            }
 
             var request = new RequestTelemetry { Name = nameof(RedisDbTests) };
             request.Context.Operation.Id = Guid.NewGuid().ToString("N");
@@ -193,6 +196,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void NewRedisDbNoConnectionString_Connect_IsConnectedTrue()
         {
             var cache = new RedisDb();
@@ -201,9 +205,10 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void NewRedisDb_ConnectionString_IsConnectedTrue()
         {
-            var cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+            var cache = new RedisDb("FakeConnectionString");
             Assert.IsTrue(cache.IsConnected);
         }
     }
