@@ -44,6 +44,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task UsageTest()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
@@ -126,6 +127,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Get_NoSet_ReturnsDefaultValue()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
@@ -136,6 +138,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_NoValueSet_Returns1()
         {
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
@@ -146,6 +149,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_NoValueSetIncrement5_Returns5()
         {
             const long number = 5;
@@ -158,6 +162,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_ValueSet_ReturnsPlus1()
         {
             const long number = 1;
@@ -171,6 +176,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_Increment5FireAndForget_Returns0()
         {
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
