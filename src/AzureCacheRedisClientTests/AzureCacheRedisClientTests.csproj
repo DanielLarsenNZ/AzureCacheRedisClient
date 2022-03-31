@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.Development.sus.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="appsettings.Development.json" Condition="'$(Configuration)'=='DEBUG'">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
