@@ -178,6 +178,7 @@ namespace AzureCacheRedisClient
                 {
                     TrackDependency(telemetry, ex);
                     TrackException(ex);
+                    throw;
                 }
             }
         }

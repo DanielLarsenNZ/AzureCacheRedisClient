@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -62,6 +63,31 @@ namespace AzureCacheRedisClientTests
 
         [TestMethod]
         [TestCategory("Integration")]
+        public async Task TaskWhenAllUsageTest()
+        {
+            const string key = "foobar1";
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+
+            var item = new TestItem { Name = "foo", Value = "bar" };
+
+            var tasks = new List<Task>();
+            
+
+            await cache.Set(key, item, TimeSpan.FromSeconds(1));
+            
+            tasks.Add(cache.Get<TestItem>(key));
+            tasks.Add(cache.Get<TestItem>(key));
+            tasks.Add(cache.Get<TestItem>(key));
+
+            // act
+            await Task.WhenAll(tasks);
+
+            await cache.Delete(key);
+        }
+
+
+        [TestMethod]
+        [TestCategory("Integration")]
         public async Task DeleteKey_SuccessfullyRemovesKey()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
@@ -92,6 +118,20 @@ namespace AzureCacheRedisClientTests
 
             Assert.AreEqual(item, cachedItem);
             Assert.IsNull(nonExistentKey);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(Exception))]
+        [Timeout(1000)]
+        public void HandleRedis_ExceptionThrown_ThrowException()
+        {
+            string testName = nameof(HandleRedis_ExceptionThrown_ThrowException);
+            var cache = new RedisDb();
+
+            cache.HandleRedis<bool>(testName, null, () =>
+            {
+                throw new Exception(testName);
+            });
         }
 
         [TestMethod]
