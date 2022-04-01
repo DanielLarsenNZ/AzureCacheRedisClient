@@ -16,4 +16,7 @@ await cache.Set("foobar1", item, TimeSpan.FromSeconds(90));
 
 // Get cached item
 var cachedItem = await cache.Get<TestItem>("foobar1");
+
+// Deletes a specified key from the cache.
+await cache.Delete("foobar1");
 ```
