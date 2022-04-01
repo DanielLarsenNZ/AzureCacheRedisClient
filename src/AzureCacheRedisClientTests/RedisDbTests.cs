@@ -61,6 +61,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task DeleteKey_SuccessfullyRemovesKey()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
@@ -76,6 +77,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task DeleteKey_IgnoresKeyWhenItDoesNotExist()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
