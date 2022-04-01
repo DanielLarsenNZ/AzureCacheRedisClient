@@ -220,9 +220,11 @@ namespace AzureCacheRedisClientTests
         {
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
 
-            Assert.AreEqual(1, await cache.Increment(Guid.NewGuid().ToString("N")));
+            string key = Guid.NewGuid().ToString("N");
 
-            //TODO: Cleanup key
+            Assert.AreEqual(1, await cache.Increment(key));
+
+            await cache.Delete(key);
         }
 
         [TestMethod]
@@ -231,11 +233,13 @@ namespace AzureCacheRedisClientTests
         {
             const long number = 5;
 
+            string key = Guid.NewGuid().ToString("N");
+
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
 
-            Assert.AreEqual(number, await cache.Increment(Guid.NewGuid().ToString("N"), number));
+            Assert.AreEqual(number, await cache.Increment(key, number));
 
-            //TODO: Cleanup key
+            await cache.Delete(key);
         }
 
         [TestMethod]
@@ -260,6 +264,56 @@ namespace AzureCacheRedisClientTests
 
             Assert.AreEqual(default, await cache.Increment(nameof(Increment_ValueSet_ReturnsPlus1), 5, fireAndForget: true));
 
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task Decrement_NoValueSet_ReturnsMinus1()
+        {
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            string key = Guid.NewGuid().ToString("N");
+
+            Assert.AreEqual(-1, await cache.Decrement(key));
+
+            await cache.Delete(key);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task Decrement_NoValueSetDecrement5_ReturnsMinus5()
+        {
+            const long number = 5;
+
+            string key = Guid.NewGuid().ToString("N");
+
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            Assert.AreEqual(-5, await cache.Decrement(key, number));
+
+            await cache.Delete(key);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task Decrement_ValueSet_ReturnMinus1()
+        {
+            const long number = 1;
+
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            await cache.Set(nameof(Decrement_ValueSet_ReturnMinus1), number, TimeSpan.FromSeconds(1));
+
+            Assert.AreEqual(number - 1, await cache.Decrement(nameof(Decrement_ValueSet_ReturnMinus1)));
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task Decrement_Decrement5FireAndForget_Returns0()
+        {
+            IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+
+            Assert.AreEqual(default, await cache.Decrement(nameof(Decrement_ValueSet_ReturnMinus1), 5, fireAndForget: true));
         }
 
         [TestMethod]

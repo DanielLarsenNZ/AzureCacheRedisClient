@@ -100,6 +100,22 @@ namespace AzureCacheRedisClient
         }
 
         /// <summary>
+        /// Decrements the <see cref="long"/> number stored at <paramref name="key"/> by <paramref name="decrement"/> .
+        /// If the key does not exist, it is set to 0 before performing the operation.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="increment">The amount to decrement by (defaults to 1).</param>
+        /// <param name="fireAndForget">When true, the caller will immediately receive a default-value. This value is not indicative of anything at the server.</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task<long> Decrement(string key, long decrement = 1, bool fireAndForget = false)
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+
+            return await HandleRedis("Db Decrement", key, () => _db.StringDecrementAsync(key, decrement, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
+        }
+
+        /// <summary>
         /// Sets a value in Cache, overwriting any existing value if same key exists.
         /// </summary>
         /// <param name="key"></param>
