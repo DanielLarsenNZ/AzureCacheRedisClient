@@ -112,6 +112,20 @@ namespace AzureCacheRedisClient
             await HandleRedis("Db Set", key, () => _db.StringSetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value), expiry, When.Always));
         }
 
+        /// <summary>
+        /// Removes the specified key. If the key does not exist, it is ignored.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="fireAndForget"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task Delete(string key, bool fireAndForget = false)
+        {
+            if (_db == null) throw new InvalidOperationException("Redis Database is not connected. Call Connect(connectionString).");
+
+            await HandleRedis("Db Del", key, () => _db.KeyDeleteAsync(key, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
+        }
+
 
         /// <summary>
         /// Handles Redis exceptions and Tracks dependency calls via Application Insights

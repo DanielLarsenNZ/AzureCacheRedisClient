@@ -61,6 +61,40 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
+        public async Task DeleteKey_SuccessfullyRemovesKey()
+        {
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+
+            var item = new TestItem { Name= "foo", Value = "bar" };
+            await cache.Set("foobar1", item, TimeSpan.FromSeconds(10));
+
+            await cache.Delete("foobar1");
+
+            var cachedItem = await cache.Get<TestItem>("foobar1");
+
+            Assert.IsNull(cachedItem);
+        }
+
+        [TestMethod]
+        [TestCategory("Integration")]
+        public async Task DeleteKey_IgnoresKeyWhenItDoesNotExist()
+        {
+            IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
+
+            var item = new TestItem { Name = "foo", Value = "bar" };
+            await cache.Set("foobar1", item, TimeSpan.FromSeconds(10));
+
+            await cache.Delete("foobar2");
+
+            var cachedItem = await cache.Get<TestItem>("foobar1");
+            var nonExistentKey = await cache.Get<TestItem>("foobar2");
+
+            Assert.AreEqual(item, cachedItem);
+            Assert.IsNull(nonExistentKey);
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ObjectDisposedException))]
         public void HandleRedis_ThrowObjectDisposedException_TriesMoreThanRetryMaxAttempts()
         {
