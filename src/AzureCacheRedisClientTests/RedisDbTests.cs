@@ -28,7 +28,10 @@ namespace AzureCacheRedisClientTests
                 .Build();
 
             _telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-            _telemetry.InstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            if (!string.IsNullOrWhiteSpace(_configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]))
+            {
+                _telemetry.InstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            }
 
             var request = new RequestTelemetry { Name = nameof(RedisDbTests) };
             request.Context.Operation.Id = Guid.NewGuid().ToString("N");
@@ -44,6 +47,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task UsageTest()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"], _telemetry);
@@ -158,6 +162,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Get_NoSet_ReturnsDefaultValue()
         {
             IRedisCache cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
@@ -168,6 +173,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_NoValueSet_Returns1()
         {
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
@@ -178,6 +184,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_NoValueSetIncrement5_Returns5()
         {
             const long number = 5;
@@ -190,6 +197,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_ValueSet_ReturnsPlus1()
         {
             const long number = 1;
@@ -203,6 +211,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public async Task Increment_Increment5FireAndForget_Returns0()
         {
             IRedisDb cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
@@ -219,6 +228,7 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void NewRedisDbNoConnectionString_Connect_IsConnectedTrue()
         {
             var cache = new RedisDb();
@@ -227,9 +237,10 @@ namespace AzureCacheRedisClientTests
         }
 
         [TestMethod]
+        [TestCategory("Integration")]
         public void NewRedisDb_ConnectionString_IsConnectedTrue()
         {
-            var cache = new RedisDb(_configuration["AzureCacheRedisConnectionString"]);
+            var cache = new RedisDb("FakeConnectionString");
             Assert.IsTrue(cache.IsConnected);
         }
     }
